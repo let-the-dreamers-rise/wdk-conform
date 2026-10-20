@@ -1,0 +1,13 @@
+{
+  "note": "Checks that fail on the pinned WDK versions because of the findings in FINDINGS.md. CI fails on anything new, and when one of these starts passing.",
+  "failing": [
+    "portability btc {}",
+    "portability btc {\"bip\":44}",
+    "path-hygiene evm",
+    "path-hygiene btc",
+    "path-hygiene solana",
+    "path-hygiene ton",
+    "path-hygiene tron",
+    "config btc"
+  ]
+}

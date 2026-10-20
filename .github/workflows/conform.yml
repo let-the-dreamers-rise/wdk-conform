@@ -1,0 +1,42 @@
+name: conform
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  pinned:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm test
+      - run: node src/cli.js --baseline known-findings.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: report-pinned
+          path: report/
+
+  latest:
+    # The newest published WDK modules. Red here means a release changed what a seed restores to.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm install $(node -p "Object.keys(require('./package.json').dependencies).filter(d => d.startsWith('@tetherto/')).map(d => d + '@latest').join(' ')")
+      - run: node src/cli.js --baseline known-findings.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: report-latest
+          path: report/
