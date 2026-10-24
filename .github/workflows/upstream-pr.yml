@@ -24,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         variant: [pr-141, upstream-main]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: wdk-wallet-btc / ${{ matrix.variant }}
     steps:
       - name: Check out upstream main
@@ -62,9 +62,16 @@ jobs:
           wget -q https://github.com/romanz/electrs/archive/refs/tags/v${ELECTRS_VERSION_TAG}.tar.gz
           tar -xzf v${ELECTRS_VERSION_TAG}.tar.gz
           cd electrs-${ELECTRS_VERSION_TAG}
-          cargo build --locked --release
+          export CXXFLAGS="-include cstdint"
+          if ! cargo build --locked --release > /tmp/cargo.log 2>&1; then
+            grep -E '^error|error:' /tmp/cargo.log | head -20 | while read -r l; do echo "::error::$l"; done
+            tail -30 /tmp/cargo.log; exit 1
+          fi
           mkdir -p /tmp/electrs && cp target/release/electrs /tmp/electrs/
       - run: sudo install -m0755 /tmp/electrs/electrs /usr/local/bin/
       - name: Run tests
-        run: npm test
         working-directory: repo
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee /tmp/test.log || { grep -E 'Tests:|✕' /tmp/test.log | head -30 | while read -r l; do echo "::error::$l"; done; exit 1; }
+          grep -E 'Tests:' /tmp/test.log | while read -r l; do echo "::notice::$l"; done
