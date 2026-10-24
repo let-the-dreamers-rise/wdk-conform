@@ -1,0 +1,70 @@
+name: upstream-pr
+
+# Runs tetherto/wdk-wallet-btc's own build.yml steps (lint, unit and regtest
+# integration tests with bitcoind + electrs) on PR #141 merged into upstream
+# main, and on upstream main alone for comparison.
+
+on:
+  push:
+    paths: ['.github/workflows/upstream-pr.yml']
+  workflow_dispatch:
+  schedule:
+    - cron: '41 5 * * *'
+
+permissions:
+  contents: read
+
+env:
+  ELECTRS_VERSION_TAG: "0.10.10"
+  BITCOIND_VERSION_TAG: "29.0"
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [pr-141, upstream-main]
+    runs-on: ubuntu-latest
+    name: wdk-wallet-btc / ${{ matrix.variant }}
+    steps:
+      - name: Check out upstream main
+        run: |
+          git clone https://github.com/tetherto/wdk-wallet-btc repo
+          cd repo
+          if [ "${{ matrix.variant }}" = "pr-141" ]; then
+            git config user.name ci && git config user.email ci@example.com
+            git fetch https://github.com/let-the-dreamers-rise/wdk-wallet-btc fix/default-network-coin-type
+            git merge --no-edit FETCH_HEAD
+          fi
+          git log --oneline -3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - run: npm install
+        working-directory: repo
+      - run: npm run lint
+        working-directory: repo
+      - name: Install LLVM dependencies
+        run: sudo apt-get update && sudo apt-get install -y llvm-dev libclang-dev clang pkg-config
+      - name: Install bitcoind
+        run: |
+          wget -q https://bitcoincore.org/bin/bitcoin-core-${BITCOIND_VERSION_TAG}/bitcoin-${BITCOIND_VERSION_TAG}-x86_64-linux-gnu.tar.gz
+          tar -xzf bitcoin-${BITCOIND_VERSION_TAG}-x86_64-linux-gnu.tar.gz
+          sudo install -m 0755 -t /usr/local/bin bitcoin-${BITCOIND_VERSION_TAG}/bin/*
+      - uses: actions/cache@v4
+        id: electrs
+        with:
+          path: /tmp/electrs
+          key: electrs-${{ env.ELECTRS_VERSION_TAG }}
+      - name: Build electrs
+        if: steps.electrs.outputs.cache-hit != 'true'
+        run: |
+          wget -q https://github.com/romanz/electrs/archive/refs/tags/v${ELECTRS_VERSION_TAG}.tar.gz
+          tar -xzf v${ELECTRS_VERSION_TAG}.tar.gz
+          cd electrs-${ELECTRS_VERSION_TAG}
+          cargo build --locked --release
+          mkdir -p /tmp/electrs && cp target/release/electrs /tmp/electrs/
+      - run: sudo install -m0755 /tmp/electrs/electrs /usr/local/bin/
+      - name: Run tests
+        run: npm test
+        working-directory: repo
