@@ -1,15 +1,15 @@
 # wdk-conform report
 
-1329 cases, 8 of 30 checks failing.
+1329 cases, 9 of 30 checks failing.
 
 ## Modules tested
 
-- `@tetherto/wdk-wallet-evm@1.0.0-beta.22`
-- `@tetherto/wdk-wallet-btc@1.0.0-beta.17`
-- `@tetherto/wdk-wallet-solana@1.0.0-beta.18`
-- `@tetherto/wdk-wallet-ton@1.0.0-beta.16`
-- `@tetherto/wdk-wallet-tron@1.0.0-beta.15`
-- `@tetherto/wdk-wallet-aptos@1.0.0-beta.3`
+- `@tetherto/wdk-wallet-evm@1.0.0-beta.26`
+- `@tetherto/wdk-wallet-btc@1.0.0-beta.18`
+- `@tetherto/wdk-wallet-solana@1.0.0-beta.21`
+- `@tetherto/wdk-wallet-ton@1.0.0-beta.20`
+- `@tetherto/wdk-wallet-tron@1.0.0-beta.18`
+- `@tetherto/wdk-wallet-aptos@1.0.0-beta.7`
 
 ## Results
 
@@ -36,7 +36,7 @@
 | path-hygiene | solana |  | 3 | **1 fail** |
 | path-hygiene | ton |  | 3 | **3 fail** |
 | path-hygiene | tron |  | 4 | **2 fail** |
-| path-hygiene | aptos |  | 2 | pass |
+| path-hygiene | aptos |  | 2 | **1 fail** |
 | config | btc |  | 4 | **4 fail** |
 | signatures | evm |  | 18 | pass |
 | signatures | btc |  | 18 | pass |
@@ -107,8 +107,7 @@
   "issue": "leading zero aliases another path",
   "accepted": true,
   "reportedPath": "m/44'/501'/00'/0'",
-  "derivedSameKeyAs": "m/44'/501'/0'/0'",
-  "index": 0
+  "derivedSameKeyAs": "m/44'/501'/0'/0'"
 }
 ```
 
@@ -133,8 +132,20 @@
   "issue": "leading zero aliases another path",
   "accepted": true,
   "reportedPath": "m/44'/195'/0'/0/01",
-  "derivedSameKeyAs": "m/44'/195'/0'/0/1",
-  "index": 1
+  "derivedSameKeyAs": "m/44'/195'/0'/0/1"
+}
+```
+
+### path-hygiene / aptos
+
+```json
+{
+  "input": "00'/0'/0'",
+  "issue": "leading zero aliases another path",
+  "accepted": true,
+  "reportedPath": "m/44'/637'/0'/0'/0'",
+  "derivedSameKeyAs": "m/44'/637'/0'/0'/0'",
+  "index": 0
 }
 ```
 

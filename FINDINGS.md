@@ -1,6 +1,6 @@
 # Findings
 
-Run against the versions pinned in `package.json` (October 2026). Reproduce everything below
+Run against the versions pinned in `package.json` (updated November 2026). Reproduce everything below
 with `npm ci && npm run conform`. Full evidence for each case is in `report/report.json`.
 
 | # | Module | Finding | Impact |
@@ -9,7 +9,7 @@ with `npm ci && npm run conform`. Full evidence for each case is in `report/repo
 | 2 | wdk-wallet-btc | Unknown network names (`"mainnet"`, `"livenet"`) are accepted silently and hit the same path | **High**: a one-word typo triggers finding 1 |
 | 3 | wdk-wallet-btc | Unhardened index ≥ 2^31 is accepted and derives the hardened key | Medium: two path strings for one key; `path` and `index` misreport it |
 | 4 | wdk-wallet-ton | Unhardened segments are silently derived as hardened | Medium: `path` reports a key the account does not hold |
-| 5 | evm, btc, solana, ton, tron | Leading zeros (`01`, `00'`) are accepted, so one key has many path strings | Low: already fixed in wdk-wallet-aptos, not in the others |
+| 5 | evm, btc, solana, ton, tron, aptos | Leading zeros (`01`, `00'`) are accepted, so one key has many path strings | Low: by design per the WDK team (see below); aptos aligned in 1.0.0-beta.7 |
 | 6 | evm, btc, tron | `account.index` is `NaN` (btc, tron) or `undefined` (evm) when the last segment is hardened | Low |
 
 What passes, and matters as much: the EVM module's own BIP-32 implementation
@@ -18,6 +18,12 @@ chains and 500 random seed/path cases. Every module's `sign()` output verifies w
 independent verifier for that chain's scheme (EIP-191, BIP-137, TRON V2, ed25519 for
 Solana/Aptos, and WDK's TON safe-sign hash). All default `getAccount(i)` addresses match
 MetaMask, Phantom, TronLink and Petra conventions.
+
+## Upstream status (November 2026)
+
+- Finding 1 and 2: fixed on `tetherto/wdk-wallet-btc` main by [PR #141](https://github.com/tetherto/wdk-wallet-btc/pull/141), merged 2026-11-10 ([issue #140](https://github.com/tetherto/wdk-wallet-btc/issues/140) closed). Not yet in an npm release: `1.0.0-beta.18` still ships the old code, so the checks stay in the baseline until a release includes the fix.
+- Findings 5 and 6: the WDK team closed the evm, solana and tron issues as not planned. Leading zeros are accepted by design (`01` = `1`), `wdk-wallet-aptos` was aligned with the rest in `1.0.0-beta.7`, and `index` was removed from the account interface (tetherto/wdk-wallet#52). The checks still report them so the behaviour is visible, and the baseline marks them as known.
+- Finding 3: the maintainers asked to hold PRs on btc issue #142 until the module roadmap (wdk-wallet-btc #131) lands. Finding 4 is tracked in wdk-wallet-ton issue #102.
 
 ## 1. wdk-wallet-btc: mainnet addresses derived under the testnet coin type
 

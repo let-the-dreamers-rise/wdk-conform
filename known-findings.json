@@ -8,6 +8,7 @@
     "path-hygiene solana",
     "path-hygiene ton",
     "path-hygiene tron",
+    "path-hygiene aptos",
     "config btc"
   ]
 }
